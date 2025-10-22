@@ -1,9 +1,13 @@
 package main
 
 import (
+	"context"
+	"log"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/juniorAkp/delivery-go/database"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 func main() {
@@ -14,6 +18,18 @@ func main() {
 	}
 
 	r := gin.Default()
+
+	var client *mongo.Client = database.Connect()
+
+	if err := client.Ping(context.Background(),nil); err != nil {
+		log.Fatal("Failed to connect to mongo db")
+	}
+
+	defer func() {
+		if err := client.Disconnect(context.Background()); err != nil {
+			panic(err)
+		}
+	}()
 
 	api := r.Group("/api/v1") 
 	{
