@@ -13,3 +13,8 @@ type Customer struct {
 	RefreshToken string  `bson:"refreshToken" json:"refreshToken"`
 	Rating       float64 `bson:"rating" json:"rating"`
 }
+
+type CustomerLogin struct {
+	Email    string `bson:"email" json:"email" validate:"required,email"`
+	Password string `bson:"password" json:"password"`
+}
