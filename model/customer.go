@@ -10,6 +10,6 @@ type Customer struct {
 	Latitude     float64 `bson:"latitude" json:"latitude"`
 	Email        string  `bson:"email" json:"email" validate:"required,email"`
 	Token        string  `bson:"token" json:"token"`
-	RefreshToken string  `bson:"refresh_token" json:"refresh_token"`
+	RefreshToken string  `bson:"refreshToken" json:"refreshToken"`
 	Rating       float64 `bson:"rating" json:"rating"`
 }
