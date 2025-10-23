@@ -12,8 +12,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/juniorAkp/delivery-go/database"
 	"github.com/juniorAkp/delivery-go/middleware"
+	"github.com/juniorAkp/delivery-go/routes"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
+
+var client *mongo.Client = database.Connect()
 
 func main() {
 	port := os.Getenv("PORT")
@@ -22,23 +25,18 @@ func main() {
 		port = "8080"
 	}
 
-	var client *mongo.Client = database.Connect()
-
 	if err := client.Ping(context.Background(), nil); err != nil {
 		log.Fatal("Failed to connect to mongo db")
 	}
-	log.Println("mongoDb connected")
 
 	r := NewRouter()
 
 	srv := &http.Server{
-		Addr:    ":" + port,
-		Handler: r,
-		// set timeout due CWE-400 - Potential Slowloris Attack
+		Addr:              ":" + port,
+		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	//start server in background
 	go func() {
 		log.Printf("server is listening on %s", port)
 		if err := srv.ListenAndServe(); err != nil {
@@ -46,28 +44,20 @@ func main() {
 		}
 	}()
 
-	stopChan := make(chan os.Signal, 1)
-	signal.Notify(stopChan, os.Interrupt, syscall.SIGTERM)
-	<-stopChan
-
-	log.Println("initializing graceful shutdown")
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		log.Printf("Http server shutdown error: %v", err)
-	} else {
-		log.Println("Http server shutdown")
 	}
 
 	if err := client.Disconnect(shutdownCtx); err != nil {
 		log.Printf("MongoDB disconnect error: %v", err)
-	} else {
-		log.Println("MongoDB disconnected")
 	}
-
-	log.Println("Shutdown complete")
 }
 
 func NewRouter() *gin.Engine {
@@ -82,6 +72,8 @@ func NewRouter() *gin.Engine {
 				"message": "pong",
 			})
 		})
+
+		routes.UnprotectedRoute(api, client)
 	}
 
 	return r

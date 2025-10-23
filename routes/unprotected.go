@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func UnprotectedRoute(router *gin.Engine, client *mongo.Client) {
+func UnprotectedRoute(router *gin.RouterGroup, client *mongo.Client) {
 	router.GET("/products", controller.GetProducts(client))
 	router.GET("/products/:productID", controller.GetProduct(client))
 	router.POST("products", controller.CreateProduct(client))
