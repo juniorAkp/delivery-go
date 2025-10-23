@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -139,4 +140,17 @@ func GetUserId(c *gin.Context) (string, error) {
 		return "", errors.New("userId is empty")
 	}
 	return id, nil
+}
+
+func GetAccessToken(c *gin.Context) (string, error) {
+	authHeader := c.Request.Header.Get("Authorization")
+	if authHeader == "" {
+		return "", errors.New("authorization header is empty")
+	}
+
+	tokenString := strings.Split(authHeader, " ")[1]
+	if tokenString == "" {
+		return "", errors.New("token not found")
+	}
+	return tokenString, nil
 }
