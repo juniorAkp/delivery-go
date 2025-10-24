@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"github.com/juniorAkp/delivery-go/database"
 	"github.com/juniorAkp/delivery-go/middleware"
 	"github.com/juniorAkp/delivery-go/routes"
@@ -19,6 +20,10 @@ import (
 var client *mongo.Client = database.Connect()
 
 func main() {
+
+	if err := godotenv.Load(); err != nil {
+		log.Println("env error")
+	}
 	port := os.Getenv("PORT")
 
 	if port == "" {
