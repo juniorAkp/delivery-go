@@ -46,7 +46,7 @@ func CreateOrder(client *mongo.Client) gin.HandlerFunc {
 		customerCollection := database.OpenCollection("customers", client)
 
 		var customer model.Customer
-		err = customerCollection.FindOne(ctx, bson.M{"_id": userId}).Decode(&customer)
+		err = customerCollection.FindOne(ctx, bson.M{"userId": userId}).Decode(&customer)
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 			return
@@ -57,7 +57,7 @@ func CreateOrder(client *mongo.Client) gin.HandlerFunc {
 		}
 
 		var product model.Product
-		err = productCollection.FindOne(ctx, bson.M{"_id": req.ProductId}).Decode(&product)
+		err = productCollection.FindOne(ctx, bson.M{"productId": req.ProductId}).Decode(&product)
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
 			return
@@ -96,7 +96,7 @@ func CreateOrder(client *mongo.Client) gin.HandlerFunc {
 				return nil, err
 			}
 
-			_, err = productCollection.UpdateOne(sessCtx, bson.M{"_id": req.ProductId}, bson.M{
+			_, err = productCollection.UpdateOne(sessCtx, bson.M{"productId": req.ProductId}, bson.M{
 				"$inc": bson.M{"stockQuantity": -req.Quantity},
 				"$set": bson.M{"updatedAt": time.Now()},
 			})
