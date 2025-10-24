@@ -11,20 +11,20 @@ func AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := utils.GetAccessToken(c)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "details": err.Error()})
 			c.Abort()
 			return
 		}
 
 		if token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "details": "token not found"})
 			c.Abort()
 			return
 		}
 
 		claims, err := utils.ValidateToken(token, utils.AccessToken)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized", "details": err.Error()})
 			c.Abort()
 			return
 		}
