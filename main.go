@@ -74,6 +74,7 @@ func NewRouter() *gin.Engine {
 		})
 
 		routes.UnprotectedRoute(api, client)
+		routes.ProtectedRoute(api, client)
 	}
 
 	return r
