@@ -6,6 +6,7 @@ type Customer struct {
 	Password     string  `bson:"password" json:"password" validate:"required,min=8"`
 	Phone        string  `bson:"phone" json:"phone"`
 	Code         int     `bson:"code" json:"code"`
+	UserId       string  `bson:"userId" json:"userId"`
 	Longitude    float64 `bson:"longitude" json:"longitude"`
 	Latitude     float64 `bson:"latitude" json:"latitude"`
 	Email        string  `bson:"email" json:"email" validate:"required,email"`

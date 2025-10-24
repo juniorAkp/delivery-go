@@ -88,6 +88,10 @@ func CreateProduct(client *mongo.Client) gin.HandlerFunc {
 			return
 		}
 
+		product.CreatedAt = time.Now()
+		product.UpdatedAt = time.Now()
+		product.ProductId = bson.NewObjectID().Hex()
+
 		result, err := productCollection.InsertOne(ctx, product)
 
 		if err != nil {

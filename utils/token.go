@@ -78,9 +78,9 @@ func UpdateAllTokens(userId, token, refreshToken string, client *mongo.Client) e
 			"updatedAt":    updateAt,
 		},
 	}
-	var customersCollection *mongo.Collection = database.OpenCollection("Customers", client)
+	var customersCollection *mongo.Collection = database.OpenCollection("customers", client)
 
-	_, err := customersCollection.UpdateOne(ctx, bson.M{"_id": userId}, updateData)
+	_, err := customersCollection.UpdateOne(ctx, bson.M{"userId": userId}, updateData)
 	if err != nil {
 		return err
 	}

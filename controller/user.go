@@ -37,7 +37,7 @@ func RegisterCustomer(client *mongo.Client) gin.HandlerFunc {
 		var ctx, cancel = context.WithTimeout(c, 100*time.Second)
 		defer cancel()
 
-		var customerCollection *mongo.Collection = database.OpenCollection("Customers", client)
+		var customerCollection *mongo.Collection = database.OpenCollection("customers", client)
 
 		count, err := customerCollection.CountDocuments(ctx, bson.M{"email": customer.Email})
 		if err != nil {
@@ -49,8 +49,9 @@ func RegisterCustomer(client *mongo.Client) gin.HandlerFunc {
 			return
 		}
 
+		customer.UserId = bson.NewObjectID().Hex()
 		customer.Password = hashedPassword
-		customer.UpdatedAt = time.Now()
+		customer.CreatedAt = time.Now()
 		customer.UpdatedAt = time.Now()
 
 		result, err := customerCollection.InsertOne(ctx, customer)
@@ -76,7 +77,7 @@ func LoginCustomer(client *mongo.Client) gin.HandlerFunc {
 
 		var foundCustomer model.Customer
 
-		var userCollection *mongo.Collection = database.OpenCollection("Users", client)
+		var userCollection *mongo.Collection = database.OpenCollection("customers", client)
 		err := userCollection.FindOne(ctx, bson.M{"email": customerLogin.Email}).Decode(&foundCustomer)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid credentials"})
@@ -88,23 +89,19 @@ func LoginCustomer(client *mongo.Client) gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": msg})
 			return
 		}
-		token, refreshToken, err := utils.GenerateAllTokens(foundCustomer.ID.String(), foundCustomer.Email)
+		token, refreshToken, err := utils.GenerateAllTokens(foundCustomer.UserId, foundCustomer.Email)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		err = utils.UpdateAllTokens(foundCustomer.ID.String(), token, refreshToken, client)
+		err = utils.UpdateAllTokens(foundCustomer.UserId, token, refreshToken, client)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
 
-		c.JSON(http.StatusOK, model.Customer{
-			Username:     foundCustomer.Username,
-			Token:        token,
-			RefreshToken: refreshToken,
-		})
+		c.JSON(http.StatusOK, gin.H{"accessToken": token, "refreshToken": refreshToken})
 	}
 }
 
