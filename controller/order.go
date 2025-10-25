@@ -16,7 +16,7 @@ import (
 
 type CreateOrderRequest struct {
 	ProductId string `json:"productId"`
-	Quantity  int64  `json:"quantity" validate:"required gt=0"`
+	Quantity  int64  `json:"quantity" validate:"required"`
 }
 
 func CreateOrder(client *mongo.Client) gin.HandlerFunc {
@@ -83,31 +83,27 @@ func CreateOrder(client *mongo.Client) gin.HandlerFunc {
 		order.CreatedAt = time.Now()
 		order.UpdatedAt = time.Now()
 
-		session, err := client.StartSession()
+		result, err := orderCollection.InsertOne(ctx, order)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "transaction failed"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
 			return
 		}
-		defer session.EndSession(ctx)
-
-		_, err = session.WithTransaction(ctx, func(sessCtx context.Context) (any, error) {
-			result, err := orderCollection.InsertOne(sessCtx, order)
-			if err != nil {
-				return nil, err
-			}
-
-			_, err = productCollection.UpdateOne(sessCtx, bson.M{"productId": req.ProductId}, bson.M{
+		updateResult, err := productCollection.UpdateOne(
+			ctx,
+			bson.M{"productId": req.ProductId, "stockQuantity": bson.M{"$gte": req.Quantity}},
+			bson.M{
 				"$inc": bson.M{"stockQuantity": -req.Quantity},
 				"$set": bson.M{"updatedAt": time.Now()},
-			})
-			if err != nil {
-				return nil, err
-			}
-			return result, nil
-		})
-
+			},
+		)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			orderCollection.DeleteOne(ctx, bson.M{"_id": result.InsertedID})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update stock"})
+			return
+		}
+		if updateResult.MatchedCount == 0 {
+			orderCollection.DeleteOne(ctx, bson.M{"_id": result.InsertedID})
+			c.JSON(http.StatusConflict, gin.H{"error": "Stock depleted during order processing"})
 			return
 		}
 		c.JSON(http.StatusCreated, gin.H{"message": "order created", "order": order})

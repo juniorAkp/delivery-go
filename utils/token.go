@@ -88,25 +88,11 @@ func UpdateAllTokens(userId, token, refreshToken string, client *mongo.Client) e
 	return nil
 }
 
-func ValidateToken(tokenString string, tokenType TokenType) (*SignedClaims, error) {
+func ValidateToken(tokenString string) (*SignedClaims, error) {
 	claims := &SignedClaims{}
 
-	var secretKey string
-
-	switch tokenType {
-	case AccessToken:
-		secretKey = AccessSecretKey
-	case RefreshToken:
-		secretKey = RefreshSecretKey
-	default:
-		return nil, errors.New("invalid token type")
-	}
-
-	if secretKey == "" {
-		return nil, errors.New("secret key not found")
-	}
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
-		return []byte(secretKey), nil
+		return []byte(AccessSecretKey), nil
 	})
 	if err != nil {
 		return nil, err
